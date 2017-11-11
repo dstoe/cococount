@@ -1,0 +1,18 @@
+option "title" "Container Coffee Example"
+
+2017-11-01 commodity EUR
+2017-11-01 commodity COFFEE
+2017-11-01 commodity SOFTDRINK
+
+2017-11-01 open Assets:Items
+2017-11-01 open Assets:Receivable:Alice
+2017-11-01 open Assets:Receivable:Bob
+
+2017-11-01 price COFFEE 0.20 EUR
+2017-11-01 price SOFTDRINK 1.00 EUR
+
+2017-11-02 * "kitty" "cococount purchase"
+  Assets:Items                   
+  Assets:Receivable:Bob  1.00 EUR
+
+2017-11-03 price COFFEE 0.25 EUR

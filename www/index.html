@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8"/>
+    <link rel="stylesheet" type="text/css" href="css/raleway.css">
+    <link rel="stylesheet" type="text/css" href="css/w3.css">
+</head>
+<body>
+    <header class="w3-container w3-center w3-padding-32 w3-xlarge">
+        <span id="greeting"></span><span id="thanks"></span>
+    </header>
+    <div id="choices" class="w3-container w3-center w3-padding-32"></div>
+    <script>
+        "use strict";
+
+        function removeChildren(id) {
+            var element = document.getElementById(id);
+            while (element.firstChild) {
+                element.removeChild(element.firstChild);
+            }
+        }
+
+        function addChoice(title, callback) {
+            var link = document.createElement("a");
+            link.appendChild(document.createTextNode(title));
+            link.href = "#";
+            link.onclick = callback;
+            link.classList.add("w3-button")
+            link.classList.add("w3-hover-black")
+            document.getElementById("choices").appendChild(link);
+        }
+
+        function onItemSelectCallback(socket, user, item) {
+            return function () {
+                // Clean
+                ["greeting", "choices"].forEach(removeChildren);
+                // Send message
+                var msg = {
+                        "state" : "select",
+                        "item" : item,
+                        "user" : user};
+                socket.send(JSON.stringify(msg));
+            }
+        }
+
+        function onUserSelectCallback(socket, user) {
+            return function () {
+                // Clean
+                ["greeting", "choices"].forEach(removeChildren);
+                // Send message
+                var msg = {
+                        "state" : "get_items",
+                        "user" : user};
+                socket.send(JSON.stringify(msg));
+            }
+        }
+
+        function showUsers(msg, socket) {
+            // Clean
+            ["greeting", "choices"].forEach(removeChildren);
+
+            // Show title
+            document.getElementById("greeting").appendChild(document.createTextNode("Hello, who are you?"));
+
+            // Add selections
+            msg.users.sort().forEach(function(user) {
+                addChoice(user, onUserSelectCallback(socket, user));
+            });
+        }
+
+        function showItems(msg, socket) {
+            // Clean
+            ["greeting", "choices"].forEach(removeChildren);
+
+            // Show title
+            document.getElementById("greeting").appendChild(document.createTextNode("Hello " + msg.user));
+
+            for (var key in msg.items) {
+                // var copy = key;
+                addChoice(key + ": " + msg.items[key], onItemSelectCallback(socket, msg.user, key));
+            }
+            addChoice("Nothing", onItemSelectCallback(socket, msg.user, null));
+        }
+
+        function getUsers(msg, socket) {
+            socket.send(JSON.stringify({"state" : "get_users"}));
+        }
+
+        var state_dispatch = {
+            "prompt_users" : showUsers,
+            "prompt_items" : showItems,
+            "done" : getUsers,
+        }
+
+        var ws = new WebSocket("ws://" + location.hostname + ":8765/");
+
+        ws.onopen = function(event) {
+            getUsers({}, ws);
+        }
+
+        ws.onmessage = function(event) {
+            var msg = JSON.parse(event.data);
+            state_dispatch[msg.state](msg, ws);
+        }
+
+        ws.onerror = function(error) {
+            console.log("WebSocket Error " + error);
+        }
+    </script>
+</body>
