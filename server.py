@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import websockets
-import data
 import json
 import logging
 import contextlib
@@ -56,9 +55,7 @@ if __name__ == "__main__":
     parser.add_argument("--logfile", type=str, default=None)
     args = parser.parse_args()
 
-
     logging.basicConfig(filename=args.logfile, level=logging.DEBUG)
-
 
     with contextlib.closing(BeancountInterface(args.transactions)) as iface:
         consumer_dispatch = {
