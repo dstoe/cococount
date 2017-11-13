@@ -91,7 +91,7 @@
             "done" : getUsers,
         }
 
-        var ws = new WebSocket("ws://" + location.hostname + ":8765/");
+        var ws = new WebSocket("ws://" + location.hostname + ":" + location.port + "/ws");
 
         ws.onopen = function(event) {
             getUsers({}, ws);
