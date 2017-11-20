@@ -43,6 +43,22 @@ async def ping_handler(message, request, socket):
     await socket.send_json({"state" : "pong"})
 
 
+async def balances_handler(message, request, socket):
+    await socket.send_json({
+            "state" : "balances",
+            "balances" : request.app["data_interface"].get_balances()})
+
+
+async def balance_handler(message, request, socket):
+    assert("user" in message)
+    balances = request.app["data_interface"].get_balances()
+    assert(message["user"] in balances)
+    await socket.send_json({
+            "state" : "balance",
+            "user" : message["user"],
+            "balance" : balances[message["user"]]})
+
+
 async def websocket_handler(request):
     log = logging.getLogger("websocket_handler::call")
     socket = web.WebSocketResponse()
@@ -90,6 +106,8 @@ if __name__ == "__main__":
                 "select" : select_handler,
                 "flush" : flush_handler,
                 "reload" : reload_handler,
+                "balances" : balances_handler,
+                "balance" : balance_handler,
                 "ping" : ping_handler}
         app["websockets"] = []
         app.router.add_get("/ws", websocket_handler)

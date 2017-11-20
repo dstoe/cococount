@@ -3,6 +3,7 @@ import datetime
 import beancount.loader as loader
 from beancount.core import prices
 from beancount.core import realization
+from beancount.core import convert
 from beancount.core.data import Transaction, Posting, Amount, Close
 from beancount.parser.printer import format_entry
 
@@ -69,6 +70,20 @@ class BeancountInterface:
             _, number = price_list[-1]
             items[base] = float(number)
         return items
+
+    def get_balances(self):
+        balances = {}
+        for user, account in self.accounts["Assets"]["Receivable"].items():
+            last_posting = realization.find_last_active_posting(account.txn_postings)
+            if not isinstance(last_posting, Close):
+                positions = account.balance.reduce(convert.get_cost).get_positions()
+                amounts = [position.units for position in positions]
+                assert(len(amounts) < 2)
+                if len(amounts) == 1:
+                    balances[user] = str(-amounts[0])
+                else:
+                    balances[user] = "0.00 EUR"
+        return balances
 
     def flush(self):
         self.log.debug("flush transactions to file")
