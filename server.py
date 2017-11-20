@@ -51,6 +51,7 @@ async def websocket_handler(request):
     try:
         async for raw in socket:
             if raw.type == aiohttp.WSMsgType.TEXT:
+                log.debug("Received message: {}".format(raw.data))
                 msg = json.loads(raw.data)
                 assert(msg["state"] in request.app["consumer_dispatch"])
                 await request.app["consumer_dispatch"][msg["state"]](msg, request, socket)
