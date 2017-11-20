@@ -47,15 +47,28 @@ async def websocket_handler(request):
     log = logging.getLogger("websocket_handler::call")
     socket = web.WebSocketResponse()
     await socket.prepare(request)
-    async for raw in socket:
-        if raw.type == aiohttp.WSMsgType.TEXT:
-            msg = json.loads(raw.data)
-            assert(msg["state"] in request.app["consumer_dispatch"])
-            await request.app["consumer_dispatch"][msg["state"]](msg, request, socket)
-        elif raw.type == aiohttp.WSMsgType.ERROR:
-            log.error(socket.exception())
-    log.debug("Websocket closed")
+    request.app["websockets"].append(socket)
+    try:
+        async for raw in socket:
+            if raw.type == aiohttp.WSMsgType.TEXT:
+                msg = json.loads(raw.data)
+                assert(msg["state"] in request.app["consumer_dispatch"])
+                await request.app["consumer_dispatch"][msg["state"]](msg, request, socket)
+            elif raw.type == aiohttp.WSMsgType.ERROR:
+                log.error(socket.exception())
+                break
+            elif raw.type == aiohttp.WSMsgType.CLOSE:
+                break
+    finally:
+        request.app["websockets"].remove(socket)
     return socket
+
+
+async def on_shutdown(app):
+    for socket in app["websockets"]:
+        await socket.close(
+                code=aiohttp.WSCloseCode.GOING_AWAY,
+                message={"state" : "shutdown"})
 
 
 if __name__ == "__main__":
@@ -77,7 +90,9 @@ if __name__ == "__main__":
                 "flush" : flush_handler,
                 "reload" : reload_handler,
                 "ping" : ping_handler}
+        app["websockets"] = []
         app.router.add_get("/ws", websocket_handler)
         app.router.add_static("/", path="www", name="static")
+        app.on_shutdown.append(on_shutdown)
         # Start the webserver
         web.run_app(app, host="127.0.0.1", port=8000)
