@@ -25,6 +25,9 @@
             link.href = "#";
             link.onclick = callback;
             link.classList.add("w3-button")
+            link.classList.add("w3-black")
+            link.classList.add("w3-border")
+            link.classList.add("w3-xlarge")
             link.classList.add("w3-hover-black")
             document.getElementById("choices").appendChild(link);
         }
@@ -78,7 +81,7 @@
                 // var copy = key;
                 addChoice(key + ": " + msg.items[key], onItemSelectCallback(socket, msg.user, key));
             }
-            addChoice("Nothing", onItemSelectCallback(socket, msg.user, null));
+            addChoice("Back", onItemSelectCallback(socket, msg.user, null));
         }
 
         function getUsers(msg, socket) {
