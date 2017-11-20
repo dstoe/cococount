@@ -12,7 +12,14 @@ class BeancountInterface:
     def __init__(self, filename):
         self.log = logging.getLogger("BeancountInterface")
         self.filename = filename
-        entries, errors, options_map = loader.load_file(filename)
+        self.transaction = None
+        self.reload()
+
+    def reload(self):
+        if self.transaction is not None:
+            self.log.warn("Discard transactions due to reload")
+            self.log.warn(format_entry(self.transaction))
+        entries, errors, options_map = loader.load_file(self.filename)
         assert(len(errors) == 0)
         self.entries = entries
         self.options_map = options_map

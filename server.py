@@ -34,6 +34,11 @@ async def flush_handler(message, request, socket):
     await socket.send_json({"state" : "done"})
 
 
+async def reload_handler(message, request, socket):
+    request.app["data_interface"].reload()
+    await socket.send_json({"state" : "done"})
+
+
 async def websocket_handler(request):
     log = logging.getLogger("websocket_handler::call")
     socket = web.WebSocketResponse()
@@ -65,7 +70,8 @@ if __name__ == "__main__":
                 "get_users" : get_users_handler,
                 "get_items" : get_items_handler,
                 "select" : select_handler,
-                "flush" : flush_handler}
+                "flush" : flush_handler,
+                "reload" : reload_handler}
         app.router.add_get("/ws", websocket_handler)
         app.router.add_static("/", path="www", name="static")
         # Start the webserver
