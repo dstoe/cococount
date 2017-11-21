@@ -4,8 +4,11 @@ import beancount.loader as loader
 from beancount.core import prices
 from beancount.core import realization
 from beancount.core import convert
+from beancount.core import number
 from beancount.core.data import Transaction, Posting, Amount, Close
 from beancount.parser.printer import format_entry
+from beancount.parser import booking
+from beancount.parser import options
 
 
 class BeancountInterface:
@@ -46,13 +49,13 @@ class BeancountInterface:
                 payee="kitty",
                 narration="cococount purchase",
                 tags=None,
-                postings=[Posting("Assets:Items", None, None, None, None, None)],
+                postings=[Posting("Assets:Items", number.MISSING, None, None, None, {})],
                 links=None,
-                meta=None,
+                meta={},
                 date=datetime.date.today())
         amount = self.latest_price(item)
         assert(amount is not None)
-        self.transaction.postings.append(Posting(account, amount, None, None, None, None))
+        self.transaction.postings.append(Posting(account, amount, None, None, None, {}))
         self.log.debug(format_entry(self.transaction))
 
     def get_users(self):
@@ -72,8 +75,16 @@ class BeancountInterface:
         return items
 
     def get_balances(self):
+        if self.transaction is None:
+            accounts = self.accounts
+        else:
+            entries, balance_errors = booking.book(
+                    self.entries + [self.transaction],
+                    options.OPTIONS_DEFAULTS.copy())
+            assert(len(balance_errors) == 0)
+            accounts = realization.realize(entries)
         balances = {}
-        for user, account in self.accounts["Assets"]["Receivable"].items():
+        for user, account in accounts["Assets"]["Receivable"].items():
             last_posting = realization.find_last_active_posting(account.txn_postings)
             if not isinstance(last_posting, Close):
                 positions = account.balance.reduce(convert.get_cost).get_positions()
