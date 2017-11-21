@@ -37,15 +37,21 @@
         }
 
         function onItemSelectCallback(socket, user, item) {
-            return function () {
-                // Clean
-                ["greeting", "choices"].forEach(removeChildren);
-                // Send message
-                var msg = {
-                        "state" : "select",
-                        "item" : item,
-                        "user" : user};
-                socket.send(JSON.stringify(msg));
+            if (item == null) {
+                return function () {
+                    getUsers(null, socket);
+                }
+            } else {
+                return function () {
+                    // Clean
+                    ["greeting", "choices"].forEach(removeChildren);
+                    // Send message
+                    var msg = {
+                            "state" : "select",
+                            "item" : item,
+                            "user" : user};
+                    socket.send(JSON.stringify(msg));
+                }
             }
         }
 
