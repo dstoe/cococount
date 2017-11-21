@@ -6,7 +6,7 @@
 </head>
 <body>
     <header class="w3-container w3-center w3-padding-32 w3-xlarge">
-        <span id="greeting"></span><span id="thanks"></span>
+        <span id="greeting"></span>
     </header>
     <div id="choices" class="w3-container w3-center w3-padding-32"></div>
     <script>
@@ -78,7 +78,6 @@
             document.getElementById("greeting").appendChild(document.createTextNode("Hello " + msg.user));
 
             for (var key in msg.items) {
-                // var copy = key;
                 addChoice(key + ": " + msg.items[key], onItemSelectCallback(socket, msg.user, key));
             }
             addChoice("Back", onItemSelectCallback(socket, msg.user, null));
