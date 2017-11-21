@@ -21,6 +21,7 @@
             var title = document.createElement("h1");
             title.innerHTML = text;
             document.getElementById("greeting").appendChild(title);
+            return title;
         }
 
         function addChoice(title, callback) {
@@ -93,6 +94,15 @@
             addChoice("Back", onItemSelectCallback(socket, msg.user, null));
         }
 
+        function showDone(msg, socket) {
+            // Show done message for one second
+            var title = addTitle("Done");
+            title.classList.add("w3-green");
+            setTimeout(function() {
+                getUsers(null, socket);
+            }, 1000);
+        }
+
         function getUsers(msg, socket) {
             socket.send(JSON.stringify({"state" : "get_users"}));
         }
@@ -100,7 +110,7 @@
         var state_dispatch = {
             "prompt_users" : showUsers,
             "prompt_items" : showItems,
-            "done" : getUsers,
+            "done" : showDone,
         }
 
         var ws = new WebSocket("ws://" + location.hostname + ":" + location.port + "/ws");
