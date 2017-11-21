@@ -6,6 +6,7 @@ import contextlib
 import aiohttp
 from aiohttp import web
 from data import BeancountInterface
+from systemd import daemon
 
 
 async def get_users_handler(message, request, socket):
@@ -81,11 +82,19 @@ async def websocket_handler(request):
     return socket
 
 
-async def on_shutdown(app):
+async def close_sockets(app):
     for socket in app["websockets"]:
         await socket.close(
                 code=aiohttp.WSCloseCode.GOING_AWAY,
                 message={"state" : "shutdown"})
+
+
+async def notify_ready(app):
+    daemon.notify("READY=1")
+
+
+async def notify_stopping(app):
+    daemon.notify("STOPPING=1")
 
 
 if __name__ == "__main__":
@@ -112,6 +121,9 @@ if __name__ == "__main__":
         app["websockets"] = []
         app.router.add_get("/ws", websocket_handler)
         app.router.add_static("/", path="www", name="static")
-        app.on_shutdown.append(on_shutdown)
+        # Signal handlers
+        app.on_startup.append(notify_ready)
+        app.on_shutdown.append(close_sockets)
+        app.on_shutdown.append(notify_stopping)
         # Start the webserver
         web.run_app(app, host="127.0.0.1", port=8000)
