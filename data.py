@@ -29,19 +29,16 @@ class BeancountInterface:
         self.options_map = options_map
         self.transaction = None
         # Commonly used transformations of the entries
-        self.price_map = prices.build_price_map(entries)
+        self.price_entries = prices.get_last_price_entries(entries, datetime.date.today())
         self.accounts = realization.realize(self.entries)
 
-    def latest_price(self, item):
-        for commodity, base in self.price_map.forward_pairs:
-            if commodity == item:
-                _, number = self.price_map[(commodity, base)][-1]
-                return Amount(number, base)
-        return None
+    def latest_price(self, item_id):
+        prices = [p for p in self.price_entries if p.currency == item_id]
+        assert(len(prices) == 1)
+        return prices[0]
 
-    def add_posting(self, user, item):
+    def add_posting(self, user, item_id):
         assert(user in self.get_users())
-        assert(item in self.get_items().keys())
         account = "Assets:Receivable:{}".format(user)
         if self.transaction is None:
             self.transaction = Transaction(
@@ -53,9 +50,9 @@ class BeancountInterface:
                 links=None,
                 meta={},
                 date=datetime.date.today())
-        amount = self.latest_price(item)
-        assert(amount is not None)
-        self.transaction.postings.append(Posting(account, amount, None, None, None, {}))
+        price = self.latest_price(item_id)
+        self.transaction.postings.append(
+                Posting(account, price.amount, None, None, None, {}))
         self.log.debug(format_entry(self.transaction))
 
     def get_users(self):
@@ -67,12 +64,14 @@ class BeancountInterface:
         return users
 
     def get_items(self):
-        items = {}
-        for base, quote in self.price_map.forward_pairs:
-            price_list = self.price_map[(base, quote)]
-            _, number = price_list[-1]
-            items[base] = float(number)
-        return items
+        items = []
+        for price in self.price_entries:
+            name = price.meta["display-as"] if "display-as" in price.meta else price.currency
+            items.append({
+                    "item-id" : price.currency,
+                    "display-as" : name,
+                    "amount" : float(price.amount.number)})
+        return sorted(items, key=lambda item : item["amount"])
 
     def get_balances(self):
         if self.transaction is None:

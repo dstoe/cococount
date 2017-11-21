@@ -25,8 +25,8 @@ async def get_items_handler(message, request, socket):
 
 
 async def select_handler(message, request, socket):
-    if message["item"] is not None:
-        request.app["data_interface"].add_posting(message["user"], message["item"])
+    if message["item-id"] is not None:
+        request.app["data_interface"].add_posting(message["user"], message["item-id"])
     await socket.send_json({"state" : "done"})
 
 

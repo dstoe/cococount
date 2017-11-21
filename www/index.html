@@ -37,8 +37,8 @@
             document.getElementById("choices").appendChild(link);
         }
 
-        function onItemSelectCallback(socket, user, item) {
-            if (item == null) {
+        function onItemSelectCallback(socket, user, item_id) {
+            if (item_id == null) {
                 return function () {
                     getUsers(null, socket);
                 }
@@ -49,7 +49,7 @@
                     // Send message
                     var msg = {
                             "state" : "select",
-                            "item" : item,
+                            "item-id" : item_id,
                             "user" : user};
                     socket.send(JSON.stringify(msg));
                 }
@@ -88,8 +88,11 @@
             // Show title
             addTitle("Hello " + msg.user);
 
-            for (var key in msg.items) {
-                addChoice(key + ": " + msg.items[key], onItemSelectCallback(socket, msg.user, key));
+            for (var index in msg.items) {
+                var item = msg.items[index];
+                addChoice(
+                        item["display-as"] + ": " + item["amount"],
+                        onItemSelectCallback(socket, msg.user, item["item-id"]));
             }
             addChoice("Back", onItemSelectCallback(socket, msg.user, null));
         }
