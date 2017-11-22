@@ -4,9 +4,13 @@ import json
 import logging
 import contextlib
 import aiohttp
+import os
 from aiohttp import web
-from data import BeancountInterface
 from systemd import daemon
+from cococount.accounting import BeancountInterface
+
+
+BASEPATH = os.path.dirname(os.path.realpath(__file__))
 
 
 async def get_users_handler(message, request, socket):
@@ -90,14 +94,14 @@ async def close_sockets(app):
 
 
 async def notify_ready(app):
-    daemon.notify("READY=1")
+    daemon.notify(daemon.Notification.READY)
 
 
 async def notify_stopping(app):
-    daemon.notify("STOPPING=1")
+    daemon.notify(daemon.Notification.STOPPING)
 
 
-if __name__ == "__main__":
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("transactions", type=str)
     parser.add_argument("--logfile", type=str, default=None)
@@ -120,7 +124,7 @@ if __name__ == "__main__":
                 "ping" : ping_handler}
         app["websockets"] = []
         app.router.add_get("/ws", websocket_handler)
-        app.router.add_static("/", path="www", name="static")
+        app.router.add_static("/", path=os.path.join(BASEPATH, "static"), name="static")
         # Signal handlers
         app.on_startup.append(notify_ready)
         app.on_shutdown.append(close_sockets)

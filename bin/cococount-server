@@ -1,0 +1,5 @@
+#!/usr/bin/env python3
+
+from cococount.server import main
+
+main()
