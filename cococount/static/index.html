@@ -56,6 +56,18 @@
             }
         }
 
+        function showBalanceCallback(socket, user) {
+            return function () {
+                // Clean
+                ["greeting", "choices"].forEach(removeChildren);
+                // Send message
+                var msg = {
+                        "state" : "get_balance",
+                        "user" : user};
+                socket.send(JSON.stringify(msg));
+            }
+        }
+
         function onUserSelectCallback(socket, user) {
             return function () {
                 // Clean
@@ -94,6 +106,7 @@
                         item["display-as"] + ": " + item["amount"],
                         onItemSelectCallback(socket, msg.user, item["item-id"]));
             }
+            addChoice("Show balance", showBalanceCallback(socket, msg.user));
             addChoice("Back", onItemSelectCallback(socket, msg.user, null));
         }
 
@@ -106,6 +119,15 @@
             }, 1000);
         }
 
+        function showBalance(msg, socket) {
+            // Show balance for two seconds
+            addTitle("Your balance, " + msg.user + ": " + msg.balance);
+
+            setTimeout(function() {
+                getUsers(null, socket);
+            }, 2000);
+        }
+
         function getUsers(msg, socket) {
             socket.send(JSON.stringify({"state" : "get_users"}));
         }
@@ -113,6 +135,7 @@
         var state_dispatch = {
             "send_users" : showUsers,
             "send_items" : showItems,
+            "send_balance" : showBalance,
             "done_select" : showDoneSelect,
         }
 
