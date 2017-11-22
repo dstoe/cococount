@@ -15,51 +15,51 @@ BASEPATH = os.path.dirname(os.path.realpath(__file__))
 
 async def get_users_handler(message, request, socket):
     reply = {
-            "state" : "prompt_users",
+            "state" : "send_users",
             "users" : request.app["data_interface"].get_users()}
     await socket.send_json(reply)
 
 
 async def get_items_handler(message, request, socket):
     reply = {
-            "state" : "prompt_items",
+            "state" : "send_items",
             "user" : message["user"],
             "items" : request.app["data_interface"].get_items()}
     await socket.send_json(reply)
 
 
-async def select_handler(message, request, socket):
+async def do_select_handler(message, request, socket):
     if message["item-id"] is not None:
         request.app["data_interface"].add_posting(message["user"], message["item-id"])
-    await socket.send_json({"state" : "done"})
+    await socket.send_json({"state" : "done_select"})
 
 
-async def flush_handler(message, request, socket):
+async def do_flush_handler(message, request, socket):
     request.app["data_interface"].flush()
-    await socket.send_json({"state" : "done"})
+    await socket.send_json({"state" : "done_flush"})
 
 
-async def reload_handler(message, request, socket):
+async def do_reload_handler(message, request, socket):
     request.app["data_interface"].reload()
-    await socket.send_json({"state" : "done"})
+    await socket.send_json({"state" : "done_reload"})
 
 
-async def ping_handler(message, request, socket):
-    await socket.send_json({"state" : "pong"})
+async def do_ping_handler(message, request, socket):
+    await socket.send_json({"state" : "done_ping"})
 
 
-async def balances_handler(message, request, socket):
+async def get_balances_handler(message, request, socket):
     await socket.send_json({
-            "state" : "balances",
+            "state" : "send_balances",
             "balances" : request.app["data_interface"].get_balances()})
 
 
-async def balance_handler(message, request, socket):
+async def get_balance_handler(message, request, socket):
     assert("user" in message)
     balances = request.app["data_interface"].get_balances()
     assert(message["user"] in balances)
     await socket.send_json({
-            "state" : "balance",
+            "state" : "send_balance",
             "user" : message["user"],
             "balance" : balances[message["user"]]})
 
@@ -90,7 +90,7 @@ async def close_sockets(app):
     for socket in app["websockets"]:
         await socket.close(
                 code=aiohttp.WSCloseCode.GOING_AWAY,
-                message={"state" : "shutdown"})
+                message={"state" : "notify_shutdown"})
 
 
 async def notify_ready(app):
@@ -116,12 +116,13 @@ def main():
         app["consumer_dispatch"] = {
                 "get_users" : get_users_handler,
                 "get_items" : get_items_handler,
-                "select" : select_handler,
-                "flush" : flush_handler,
-                "reload" : reload_handler,
-                "balances" : balances_handler,
-                "balance" : balance_handler,
-                "ping" : ping_handler}
+                "do_select" : do_select_handler,
+                "do_flush" : do_flush_handler,
+                "do_reload" : do_reload_handler,
+                "do_ping" : do_ping_handler,
+                "get_balances" : get_balances_handler,
+                "get_balance" : get_balance_handler,
+                }
         app["websockets"] = []
         app.router.add_get("/ws", websocket_handler)
         app.router.add_static("/", path=os.path.join(BASEPATH, "static"), name="static")

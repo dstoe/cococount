@@ -48,7 +48,7 @@
                     ["greeting", "choices"].forEach(removeChildren);
                     // Send message
                     var msg = {
-                            "state" : "select",
+                            "state" : "do_select",
                             "item-id" : item_id,
                             "user" : user};
                     socket.send(JSON.stringify(msg));
@@ -97,7 +97,7 @@
             addChoice("Back", onItemSelectCallback(socket, msg.user, null));
         }
 
-        function showDone(msg, socket) {
+        function showDoneSelect(msg, socket) {
             // Show done message for one second
             var title = addTitle("Done");
             title.classList.add("w3-green");
@@ -111,9 +111,9 @@
         }
 
         var state_dispatch = {
-            "prompt_users" : showUsers,
-            "prompt_items" : showItems,
-            "done" : showDone,
+            "send_users" : showUsers,
+            "send_items" : showItems,
+            "done_select" : showDoneSelect,
         }
 
         var ws = new WebSocket("ws://" + location.hostname + ":" + location.port + "/ws");
