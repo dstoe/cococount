@@ -74,8 +74,12 @@ async def websocket_handler(request):
             if raw.type == aiohttp.WSMsgType.TEXT:
                 log.debug("Received message: {}".format(raw.data))
                 msg = json.loads(raw.data)
-                assert(msg["state"] in request.app["consumer_dispatch"])
-                await request.app["consumer_dispatch"][msg["state"]](msg, request, socket)
+                dispatch = request.app["consumer_dispatch"]
+                if msg["state"] in dispatch:
+                    await dispatch[msg["state"]](msg, request, socket)
+                else:
+                    log.warn("Received invalid message: {}".format(raw.data))
+                    await socket.close()
             elif raw.type == aiohttp.WSMsgType.ERROR:
                 log.error(socket.exception())
                 break
