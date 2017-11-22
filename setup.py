@@ -6,7 +6,7 @@ setup(
         packages=[
                 "cococount",
                 "cococount.static"],
-        scripts=["bin/cococount-server"],
+        scripts=["bin/cococount-server", "bin/cococount-send"],
         install_requires=["aiohttp>=1.3.0", "beancount>=2.0rc1", "systemd"],
         package_data = {"cococount.static" : ["*.html", "css/*.css", "css/*.ttf"]}
         )
